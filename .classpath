@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<classpath>
+	<classpathentry kind="src" path="src"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/jre1.8.0_111"/>
+	<classpathentry kind="lib" path="C:/Users/Administrateur/Desktop/Work/dev tools/Java libraries/dom4j-1.6.1.jar"/>
+	<classpathentry kind="lib" path="C:/Users/Administrateur/Desktop/Work/dev tools/Java libraries/java-library-8.3.0-SNAPSHOT.jar"/>
+	<classpathentry kind="lib" path="C:/Users/Administrateur/Desktop/Work/dev tools/Java libraries/keyprocessor-jdbc-8.3.0-SNAPSHOT.jar"/>
+	<classpathentry kind="lib" path="C:/Users/Administrateur/Desktop/Work/dev tools/Java libraries/log4j-1.2.8.jar"/>
+	<classpathentry kind="lib" path="C:/Users/Administrateur/Desktop/Work/dev tools/Java libraries/mysql-connector-java-5.1.40-bin.jar"/>
+	<classpathentry kind="lib" path="C:/Users/Administrateur/Desktop/Work/dev tools/Java libraries/poi-3.9-20121203.jar"/>
+	<classpathentry kind="lib" path="C:/Users/Administrateur/Desktop/Work/dev tools/Java libraries/poi-ooxml-3.9-20121203.jar"/>
+	<classpathentry kind="lib" path="C:/Users/Administrateur/Desktop/Work/dev tools/Java libraries/poi-ooxml-schemas-3.9-20121203.jar"/>
+	<classpathentry kind="lib" path="C:/Users/Administrateur/Desktop/Work/dev tools/Java libraries/xmlbeans-2.3.0.jar"/>
+	<classpathentry kind="output" path="bin"/>
+</classpath>
