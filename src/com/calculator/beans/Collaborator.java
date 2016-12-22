@@ -122,8 +122,8 @@ public class Collaborator {
 		this.transactions = transactions;
 	}
 
-	public ArrayList<Transaction> getTransactionsByDate(String date) {
-		ArrayList<Transaction> result = new ArrayList<Transaction>();
+	public Transactions getTransactionsByDate(String date) {
+		Transactions result = new Transactions();
 		for (Transaction it : this.transactions)
 			if (it.getDate().equals(date) && it.getPersonId() == this.personId)
 				result.add(it);

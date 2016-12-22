@@ -1,5 +1,9 @@
 package com.calculator.agent;
 
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+
 import com.calculator.beans.Collaborators;
 import com.calculator.writers.Persister;
 import com.calculator.writers.Writer;
@@ -19,16 +23,17 @@ import com.calculator.writers.Writer;
 public class Main {
 
 	public static void main(String[] args) {
-
-			Persister ps = new Persister();
-			Collaborators cols = ps.getCollaborators("ATSM");
-			ps.getTransactions(cols);
-			ps.calculateAttendance(cols);
-			ps.persistAttendances(cols);
-			ps.persistCollaborators(cols);
-			Writer wr = new Writer();
-			wr.writeTransactions(cols);
-			System.out.println("Done executing");
+		DateFormat df = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
+		System.out.println("Start executing " + df.format(new Date()));
+		Persister ps = new Persister();
+		Collaborators cols = ps.getCollaborators("ATSM");
+		ps.getTransactions(cols);
+		ps.calculateAttendance(cols);
+		ps.persistCollaborators(cols);
+		ps.persistAttendanceData(cols);
+		Writer wr = new Writer();
+		wr.writeTransactions(cols);
+		System.out.println("Done executing " + df.format(new Date()));
 
 	}
 

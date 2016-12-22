@@ -52,11 +52,11 @@ import com.ie.jdbc.ResultSet;
 public class Persister {
 
 	
-	Database dbM = new DbFactory().getDatabaseConnection("Mysql");
-	Database dbI = new DbFactory().getDatabaseConnection("Iprotect");
-	Mysql conM = (Mysql) dbM.getDatabase();
-	Iprotect conI = (Iprotect) dbI.getDatabase();
-	
+	private Database dbM = new DbFactory().getDatabaseConnection("Mysql");
+	private Database dbI = new DbFactory().getDatabaseConnection("Iprotect");
+	private Mysql conM = (Mysql) dbM.getDatabase();
+	private Iprotect conI = (Iprotect) dbI.getDatabase();
+	private int nxt_index = 0;
 	
 	
 	public Time convertToTime(long value) {
@@ -92,6 +92,7 @@ public class Persister {
 		Collaborators result = new Collaborators();
 		try{
 			ResultSet rs_col = (com.ie.jdbc.ResultSet) conI.conn.prepareStatement("SELECT NAME, FIRSTNAME, PERSONID, FREETEXT1 FROM PERSON WHERE FREETEXT2 = '"+ entity + "'").executeQuery();
+//			ResultSet rs_col = (com.ie.jdbc.ResultSet) conI.conn.prepareStatement("SELECT NAME, FIRSTNAME, PERSONID, FREETEXT1 FROM PERSON WHERE personid = 2918").executeQuery();
 			while (rs_col.next()) {
 				Collaborator it_col = new Collaborator();
 				it_col.setPersonId(rs_col.getLong("PERSONID"));
@@ -115,16 +116,15 @@ public class Persister {
 		String end = format.format(cal.getTime());
 		cal.add(Calendar.DAY_OF_MONTH, -1);
 		String begin = format.format(cal.getTime());
-		System.out.println(begin + " " + end);
 // *******************************************************************************************************************************************************************************
 		try{
 			for(int i = 0 ; i < collaborators.size(); i++){
 				ResultSet rs_trans = (com.ie.jdbc.ResultSet) conI.conn.prepareStatement("SELECT TIME, TRANSID, PRIMKEY FROM TRANSTABLE INNER JOIN TRANSACTION ON TRANSACTION.TRANSID = TRANSTABLE.TRANSID WHERE TIME >= #"
 				+ begin
-//				+ "2016-12-12"
+//				+ "2016-12-1"
 				+ " 00:00:00# and TIME <= #"
 				+ end 
-//				+ "2016-12-18"
+//				+ "2016-12-21"
 				+ " 00:00:00# AND TRANSACTION.TRANSTYPE = 2 AND  TABLEID = 19 AND PRIMKEY = " + collaborators.get(i).getPersonId()).executeQuery();
 				Transactions col_transactions = new Transactions();
 				while (rs_trans.next()) {
@@ -145,6 +145,8 @@ public class Persister {
 							trans.setType(0);
 						else 
 							trans.setType(1);
+						trans.setText(rs_text.getString("TEXT"));
+						trans.setAtt_id(nxt_index);
 					}
 					col_transactions.add(trans);
 				}
@@ -162,7 +164,8 @@ public class Persister {
 			ArrayList<String> dates = collaborators.get(i).getTransactionsDates();
 			
 			for(int k = 0 ; k < dates.size(); k++){
-				ArrayList<Transaction> trs = new ArrayList<Transaction>();
+//				System.out.println("attendance for : " + collaborators.get(i).getFirstName() + " Date : "+ dates.get(k));
+				Transactions trs = new Transactions();
 				trs = collaborators.get(i).getTransactionsByDate(dates.get(k));
 				Time presence = new Time();
 				Time pause = new Time();
@@ -186,6 +189,7 @@ public class Persister {
 						pause.add(timeDifference(trs.get(j - 1).getDate() + " " + trs.get(j - 1).getTime(), trs.get(j).getDate() + " " + trs.get(j).getTime()));
 					
 				}
+				att.setTransactions(trs);
 				att.setPause(pause.toString());
 				att.setPresence(presence.toString());
 				attendances.add(att);
@@ -194,14 +198,46 @@ public class Persister {
 			collaborators.get(i).setAttendances(attendances);
 		}
 	}
-	
-	public void persistAttendances(Collaborators collaborators){
+	public void persistCollaborators(Collaborators collaborators){
 		Statement st;
+		try {
+			st = conM.conn.createStatement();
+			st.execute("DELETE FROM `collaborator` WHERE 1");
+		} catch (Exception e) {
+			System.out.println("Error deleting collaborators for update!"+e.getLocalizedMessage());
+		}
+		for(Collaborator it_col : collaborators){
+			try {
+				st = conM.conn.createStatement();
+				st.execute("INSERT INTO `collaborator`(`PERSONID`, `NAME`, `FIRSTNAME`) VALUES ("
+						+ it_col.getPersonId()
+						+ ",'"
+						+ it_col.getName()
+						+ "','"
+						+ it_col.getFirstName().replace("'", "") + "')");
+				st.close();
+				
+			} catch (SQLException e) {
+				System.out.println("Persisting collaborators data failed! "
+						+ e.getMessage());
+				System.out.println("INSERT INTO `collaborator`(`PERSONID`, `NAME`, `FIRSTNAME`) VALUES ("
+						+ it_col.getPersonId()
+						+ ",'"
+						+ it_col.getName()
+						+ "','"
+						+ it_col.getFirstName().replace("'", "") + "')");
+			}
+			
+		}
+	}
+	
+	public void persistAttendanceData(Collaborators collaborators){
+		Statement st;
+
 		for(Collaborator it_col : collaborators){
 			for(Attendance it_att : it_col.getAttendances()){
 				try {
-					st = conM.conn.createStatement();
-					st.execute("DELETE FROM COLLABORATOR");
+
 					st = conM.conn.createStatement();
 					st.execute("INSERT INTO `attendance`(`PERSONID`, `DATE`, `ENTRY`, `EXIT`, `PRESENCE`, `PAUSE`) VALUES ("
 							+ it_col.getPersonId()
@@ -213,33 +249,32 @@ public class Persister {
 							+ it_att.getExit()
 							+ "','"
 							+ it_att.getPresence() + "','" + it_att.getPause() + "')");
+					java.sql.ResultSet rs = st.executeQuery("SELECT LAST_INSERT_ID() AS lAST_ID FROM ATTENDANCE");
+					rs.next();
+					nxt_index = rs.getInt("LAST_ID");
+					for(Transaction it_trans : it_att.getTransactions()){
+						st.execute("INSERT INTO `transaction`(`TRANSID`, `PERSONID`, `ATTENDID`, `DATE`, `TIME`, `TYPE`, `TEXT`) "
+									+" VALUES (" + it_trans.getTransId() + "," + it_trans.getPersonId()+", "+ nxt_index +", '"+ it_trans.getDate()+ "', '"+ it_trans.getTime()+"',"
+											+ it_trans.getType()+", '"+it_trans.getText().replace("'", "")+"')");
+					}
+					st.close();
 
 				} catch (SQLException e) {
 					System.out.println("Persisting attendance data failed! "
-							+ e.getMessage());
+							+ e.getLocalizedMessage());
+					System.out.println("INSERT INTO `attendance`(`PERSONID`, `DATE`, `ENTRY`, `EXIT`, `PRESENCE`, `PAUSE`) VALUES ("
+							+ it_col.getPersonId()
+							+ ",'"
+							+ it_att.getDate()
+							+ "','"
+							+ it_att.getEntry()
+							+ "','"
+							+ it_att.getExit()
+							+ "','"
+							+ it_att.getPresence() + "','" + it_att.getPause() + "')");
 				}
 			}
 		}
-	}
-	
-	public void persistCollaborators(Collaborators collaborators){
-		Statement st;
-		for(Collaborator it_col : collaborators){
-			try {
-				st = conM.conn.createStatement();
-				st.execute("INSERT INTO `collaborator`(`PERSONID`, `NAME`, `FIRSTNAME`) VALUES ("
-						+ it_col.getPersonId()
-						+ ",'"
-						+ it_col.getName()
-						+ "','"
-						+ it_col.getFirstName().replace("'", "") + "')");
-				
-			} catch (SQLException e) {
-				System.out.println("Persisting collaborators data failed! "
-						+ e.getMessage());
-			}
-		}
-	}
-	
+	}		
 
 }

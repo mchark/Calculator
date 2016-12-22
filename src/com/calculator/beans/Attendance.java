@@ -31,6 +31,7 @@ public class Attendance {
 	private String entry;
 	private String exit;
 	private String date;
+	private Transactions transactions;
 
 	public Attendance() {
 		super();
@@ -94,5 +95,15 @@ public class Attendance {
 	public void setDate(String date) {
 		this.date = date;
 	}
+
+	public Transactions getTransactions() {
+		return transactions;
+	}
+
+	public void setTransactions(Transactions transactions) {
+		this.transactions = transactions;
+	}
+	
+	
 
 }

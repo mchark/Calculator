@@ -4,6 +4,7 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.util.Iterator;
 
@@ -42,32 +43,50 @@ public class Writer {
 			XSSFWorkbook workbook = new XSSFWorkbook(pdb);
 			XSSFSheet sheet = workbook.getSheetAt(0);
 			Iterator<Row> rowIterator = sheet.iterator();
+			rowIterator.next();
 			while(rowIterator.hasNext()){
-				String name = new String();
-				String firstName = new String();
-				String hRnum = new String();
-				String cin = new String();
-				Row row = rowIterator.next();
-				Iterator<Cell> cellIterator = row.cellIterator();
-				for(int i = 0; cellIterator.hasNext(); i++){
-					Cell cell = cellIterator.next();
-					switch(i){
-//					0 : Nom - 1 : Prénom - 2 : CIN - 6 : Matricule RH
-						case 0: name = cell.getStringCellValue();
-						case 1: firstName = cell.getStringCellValue();
-						case 2: cin = cell.getStringCellValue();
-						case 6: hRnum = cell.getStringCellValue();
-					}
-//					Get collaborator reference by its name, firstname and CIN to save its HR number
-					int index = cols.getCollaboratorIndexByname(name, firstName, cin);
-					if(index!= -1)
-						cols.get(index).setHRnum(hRnum);
+					String name = new String();
+					String firstName = new String();
+					String hRnum = new String();
+					String cin = new String();
+					Row row = rowIterator.next();
+					Iterator<Cell> cellIterator = row.cellIterator();
+					for(int i = 0; cellIterator.hasNext(); i++){
+						Cell cell = cellIterator.next();
+						switch(i){
+	//					0 : Matricule RH - 1 : Nom - 2 : Prénom - 3 : CIN
+							case 0: 
+								if(cell.getCellType() == 0) 
+									hRnum = (int)cell.getNumericCellValue()+ "";
+								else if(cell.getCellType() == 1)
+									hRnum = cell.getStringCellValue();
+							case 1: 
+								if(cell.getCellType() == 0) 
+									name = cell.getNumericCellValue() + "";
+								else if(cell.getCellType() == 1)
+									name = cell.getStringCellValue();
+							case 2: 
+								if(cell.getCellType() == 0) 
+									firstName = cell.getNumericCellValue()+ "";
+								else if(cell.getCellType() == 1)
+									firstName = cell.getStringCellValue();
+							case 3: 
+								if(cell.getCellType() == 0) 
+									cin = cell.getNumericCellValue()+ "";
+								else if(cell.getCellType() == 1)
+									cin = cell.getStringCellValue();
+						}
+	//					Get collaborator reference by its name, firstname and CIN to save its HR number
+						int index = cols.getCollaboratorIndexByname(name, firstName, cin);
+						if(index!= -1)
+							cols.get(index).setHRnum(hRnum);
+	
+					}				
+				}
+				pdb.close();	
 
-				}				
-			}
-			pdb.close();		
-		}catch(Exception e){
-			System.out.println("Error reading excel file / updating collaborators : "+ e.getStackTrace());
+		}catch(IOException e){
+			System.out.println("Error reading excel file / updating collaborators : "+ e.getLocalizedMessage());
 		}
 		
 //		Writing collaborators with their transactions
